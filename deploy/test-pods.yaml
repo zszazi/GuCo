@@ -6,23 +6,25 @@ metadata:
     name: nginx-safe
 spec:
     containers:
-        - image: nginx
+        - image: nginx:1.27.3-alpine3.20-slim
           name: nginx
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-    name: nginx-no
+   name: nginx-normal #No Scan No Kata
 spec:
-    containers:
-        - image: nginx
-          name: nginx
+   containers:
+       - image: nginx
+         name: nginx
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-    name: nginx-no
+    labels:
+        schedulize.preflight.guco.zszazi.github.io: "true" #Schedule + Analyze = Schedulize
+    name: nginx-unsafe
 spec:
     containers:
-        - image: nginx
+        - image: nginx:1.21.0-alpine
           name: nginx

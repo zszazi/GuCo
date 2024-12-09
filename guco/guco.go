@@ -70,21 +70,21 @@ func (a *PodImageScanner) Handle(_ context.Context, req admission.Request) admis
 	//Add Kata-Qemu support
 	d.Spec.RuntimeClassName = pointerToString("kata-qemu")
 
-	//container security standards
-	for i := range d.Spec.Containers {
-		d.Spec.Containers[i].SecurityContext = &v1.SecurityContext{
-			RunAsUser:                pointerToInt64(1000),
-			RunAsGroup:               pointerToInt64(1000),
-			RunAsNonRoot:             pointerToBool(true),
-			Privileged:               pointerToBool(false),
-			AllowPrivilegeEscalation: pointerToBool(false),
-			Capabilities: &v1.Capabilities{
-				Drop: []v1.Capability{"ALL"},
-			},
-		}
-		//Read only filesystem
-		d.Spec.Containers[i].SecurityContext.ReadOnlyRootFilesystem = pointerToBool(true)
-	}
+	//container security standards - Not wokring with nginx demo
+	// for i := range d.Spec.Containers {
+	// 	d.Spec.Containers[i].SecurityContext = &v1.SecurityContext{
+	// 		RunAsUser:                pointerToInt64(1000),
+	// 		RunAsGroup:               pointerToInt64(1000),
+	// 		RunAsNonRoot:             pointerToBool(true),
+	// 		Privileged:               pointerToBool(false),
+	// 		AllowPrivilegeEscalation: pointerToBool(false),
+	// 		Capabilities: &v1.Capabilities{
+	// 			Drop: []v1.Capability{"ALL"},
+	// 		},
+	// 	}
+	// 	Read only filesystem failing for nginx demo
+	// 	d.Spec.Containers[i].SecurityContext.ReadOnlyRootFilesystem = pointerToBool(true)
+	// }
 
 	for i := range d.Spec.InitContainers {
 		d.Spec.InitContainers[i].SecurityContext = &v1.SecurityContext{
@@ -125,7 +125,7 @@ apk add jq;
 snyk container test {{image}}  --severity-threshold=high --json-file-output=/tmp/result.json;
 passed=$(jq '.uniqueCount' /tmp/result.json) ;
 echo $SNYK_TOKEN;
-echo $passed;
+echo $passed VULNERABILITIES FOUND;
 cat /tmp/results.json;
 if [ $passed -gt $ALLOWED_VUL ];
 then

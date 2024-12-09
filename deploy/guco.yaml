@@ -26,7 +26,7 @@ metadata:
   namespace: guardian-of-containers
 data:
   SNYK_TOKEN: "a4...."
-  ALLOWED_VUL: 1
+  ALLOWED_VUL: "1"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -50,7 +50,7 @@ spec:
       containers:
       - name: guardian-of-containers
         imagePullPolicy: IfNotPresent
-        image: zszazi/image:6
+        image: zszazi/guardian-of-containers:v0.0.1
         env:
             - name: PORT
               value: "9000"
@@ -59,12 +59,12 @@ spec:
             - name: SNYK_TOKEN
               valueFrom:
                 configMapKeyRef:
-                  name: snyk-config
+                  name: guco-config
                   key: SNYK_TOKEN
             - name: ALLOWED_VUL
               valueFrom:
                 configMapKeyRef:
-                  name: snyk-config
+                  name: guco-config
                   key: ALLOWED_VUL
         ports:
         - containerPort: 9000
