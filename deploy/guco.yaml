@@ -1,0 +1,122 @@
+# MUST Change
+# 1. SNKY TOKEN - ConfigMap
+# 2. CABUNDLE - MutatingWebhookConfiguration
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: guardian-of-containers
+---
+kind: RuntimeClass
+apiVersion: node.k8s.io/v1
+metadata:
+    name: kata-qemu
+handler: kata-qemu
+overhead:
+    podFixed:
+        memory: "160Mi"
+        cpu: "250m"
+scheduling:
+  nodeSelector:
+    katacontainers.io/kata-runtime: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: guco-config
+  namespace: guardian-of-containers
+data:
+  SNYK_TOKEN: "a4...."
+  ALLOWED_VUL: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guardian-of-containers
+  namespace: guardian-of-containers
+spec:
+  replicas: 1 # Adjust the number of replicas as needed
+  selector:
+    matchLabels:
+      app: guardian-of-containers
+  template:
+    metadata:
+      labels:
+        app: guardian-of-containers
+    spec:
+      volumes:
+          - name: tls
+            secret:
+                secretName: tls
+      containers:
+      - name: guardian-of-containers
+        imagePullPolicy: IfNotPresent
+        image: zszazi/image:6
+        env:
+            - name: PORT
+              value: "9000"
+            - name: CERTS
+              value: /certs
+            - name: SNYK_TOKEN
+              valueFrom:
+                configMapKeyRef:
+                  name: snyk-config
+                  key: SNYK_TOKEN
+            - name: ALLOWED_VUL
+              valueFrom:
+                configMapKeyRef:
+                  name: snyk-config
+                  key: ALLOWED_VUL
+        ports:
+        - containerPort: 9000
+          name: app
+        volumeMounts:
+            - name: tls
+              mountPath: /certs
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: guardian-of-containers
+    namespace: guardian-of-containers
+spec:
+    type: ClusterIP
+    selector:
+        app: guardian-of-containers
+    ports:
+        - protocol: TCP
+          port: 443 # External port
+          targetPort: 9000
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+    name: "preflight.guco.zszazi.github.io"
+webhooks:
+    - name: "preflight.guco.zszazi.github.io"
+      objectSelector:
+          matchLabels:
+              schedulize.preflight.guco.zszazi.github.io: "true"
+      rules:
+          - apiGroups:   [""]
+            apiVersions: ["v1"]
+            operations:  ["CREATE", "UPDATE"]
+            resources:   ["pods"]
+            scope:       "Namespaced"
+      clientConfig:
+           caBundle: "CA_BUNDLE" #Replace with cert value
+           service:
+               path: "/guco-pod-webhook-v1-pod"
+               name: guardian-of-containers
+               port: 443
+               namespace: guardian-of-containers
+      admissionReviewVersions: ["v1", "v1beta1"]
+      sideEffects: None
+      timeoutSeconds: 30

@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+    labels:
+        schedulize.preflight.guco.zszazi.github.io: "true" #Schedule + Analyze = Schedulize
+    name: nginx-safe
+spec:
+    containers:
+        - image: nginx
+          name: nginx
+---
+apiVersion: v1
+kind: Pod
+metadata:
+    name: nginx-no
+spec:
+    containers:
+        - image: nginx
+          name: nginx
+---
+apiVersion: v1
+kind: Pod
+metadata:
+    name: nginx-no
+spec:
+    containers:
+        - image: nginx
+          name: nginx
